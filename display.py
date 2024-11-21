@@ -1,5 +1,4 @@
 
-#! Fix the food production by going over a loop of all the producer cells
 
 import pygame
 import sys
@@ -61,6 +60,7 @@ class Display():
         # produce the starting generations
         self.producer_cell.generate_producerCells()
         self.predator_cell.generate_predatorCells()
+
 
 
 
@@ -200,7 +200,6 @@ class Display():
                         pygame.draw.rect(self.world, color, (x+2, y+2, 6, 6))
                         color = ()
 
-
     def run(self):     
         
         while self.running:
@@ -231,7 +230,7 @@ class Display():
                 # mouse keys
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     x, y = pygame.mouse.get_pos()
-                    print(x, y)
+                    ###print(x, y)
 
                 elif event.type == pygame.VIDEORESIZE and not self.is_fullscreen:
                     self.handle_resize(event)
@@ -255,13 +254,18 @@ class Display():
 
             # draw the cells
             self.draw_cells()
-            self.predator_cell.random_move_cells()
+            
+            # moving logic
+            for predator_cell in Predator_Cell.predator_cell_list:
+                ###print(f"Before the movement {predator_cell.position_x,predator_cell.position_y}")
+                predator_cell.random_move_cells(predator_cell)
+                
 
             # draw the utilities
             self.producer_cell.produce_food()
 
             pygame.display.update()
-            self.clock.tick(50)
+            self.clock.tick(20)
 
         pygame.quit()
 
