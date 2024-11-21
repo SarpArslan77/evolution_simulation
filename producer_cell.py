@@ -14,7 +14,7 @@ class Producer_Cell():
 
         # 1 = worst, 100 = best
         #   it will be divided by 1000, for example if it is 50 then it is going to be %0.05
-        self.food_production_speed: int = 1000
+        self.food_production_speed: int = 50
 
         # 1 = worst, 5 = best
         self.food_production_zone: int = 3
@@ -50,7 +50,6 @@ class Producer_Cell():
             if random.randint(0, 100000) < cell.food_production_speed:
                 dx, dy = random.choice(directions)
                 if self.general.is_movement_possible(cell.position_x, cell.position_y, dx, dy):
-                    #print("from the function" + str(dx) + " " + str(dy))
                     self.general.utility_matrix[cell.position_y+dy][cell.position_x+dx] = "F"
                     self.general.utility_occupied_positions.append((cell.position_x+dx, cell.position_y+dy))
                 
