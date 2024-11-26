@@ -62,8 +62,6 @@ class Display():
         self.predator_cell.generate_predatorCells()
 
 
-
-
     def handle_input(self) -> None:
         keys = pygame.key.get_pressed()
         
@@ -181,11 +179,19 @@ class Display():
             pygame.draw.line(self.world, self.general.colors["GRAY"], (0, i*10), (self.general.WORLD_WIDTH, i*10))
 
     def draw_cells(self) -> None:
+        color : tuple[int, int, int] = ()
         for cell in self.general.all_cells:
             if type(cell) == Predator_Cell:
                 color = self.general.colors["RED"]
             elif type(cell) == Producer_Cell:
-                color = self.general.colors["GREEN"]
+                if self.biom_map_matrix[cell.position_y][cell.position_x] == 6:
+                    color = self.general.colors["GREEN"]
+                elif self.biom_map_matrix[cell.position_y][cell.position_x] == 8:
+                    color = self.general.colors["ALGEA_BLUE"]
+                else:
+                    print("yarra")
+            if not(color):
+                color = self.general.colors["BLACK"]
             pygame.draw.rect(self.world, color, (cell.position_x*10+2, cell.position_y*10+2, 6, 6))
 
     def draw_utilities(self) -> None:
@@ -196,6 +202,8 @@ class Display():
                 for x in range(0, self.general.WORLD_WIDTH, 10):
                     if self.general.utility_matrix[y//10][x//10] == "F":
                         color = self.general.colors["BRIGHT_BROWN"]
+                    elif self.general.utility_matrix[y//10][x//10] == "S":
+                        color = self.general.colors["DARK_BROWN"]
                     if color:
                         pygame.draw.rect(self.world, color, (x+2, y+2, 6, 6))
                         color = ()
