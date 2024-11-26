@@ -21,7 +21,8 @@ class Producer_Cell():
 
     def generate_producerCells(self) -> None:
         for _ in range(self.general.starting_generation_producer_cell_count):
-            x_position, y_position = self.general.random_position()
+
+            x_position, y_position = self.random_position_producerCells()
             new_cell: Producer_Cell = Producer_Cell(self.general)
             new_cell.position_x, new_cell.position_y = x_position, y_position
 
@@ -32,8 +33,21 @@ class Producer_Cell():
             # all created cells must be added into its local list for its types
             self.producer_cell_list.append(new_cell)
 
-            # occupied positions must be added to the list
-            self.general.cell_occupied_positions.append((x_position, y_position))
+    def random_position_producerCells(self) -> tuple[int, int]:
+
+        # loop continues until:
+        #   an unoccupied coordinates are generated
+        #   it can generate on a suitable biom
+        while True:
+
+            x_position: int = random.randint(0, self.general.WORLD_WIDTH//10-1)
+            y_position: int = random.randint(0, self.general.WORLD_HEIGHT//10-1)
+
+            if (not(self.general.cell_matrix[y_position][x_position]) and \
+                ((self.general.map_matrix[y_position][x_position] == 6) or (self.general.map_matrix[y_position][x_position] == 8))):
+                break
+
+        return (x_position, y_position)
 
     def produce_food(self) -> None:
         for cell in self.producer_cell_list:
@@ -51,5 +65,4 @@ class Producer_Cell():
                 dx, dy = random.choice(directions)
                 if self.general.is_movement_possible(cell.position_x, cell.position_y, dx, dy):
                     self.general.utility_matrix[cell.position_y+dy][cell.position_x+dx] = "F"
-                    self.general.utility_occupied_positions.append((cell.position_x+dx, cell.position_y+dy))
                 
