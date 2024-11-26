@@ -1,6 +1,12 @@
 import random
 
+from depot import map_matrix
+
 class General():
+
+    # general settings
+    WORLD_WIDTH = 2000
+    WORLD_HEIGHT = 1000
 
     # starting cell matrix of the game 100 x 200
     cell_matrix: list[list[str]] = []
@@ -9,13 +15,17 @@ class General():
 
     # cell list for created cells
     all_cells: list = []
-    cell_occupied_positions: list[tuple[int, int]] = []
-    utility_occupied_positions: list[tuple[int, int]] = []
+
+    for y in range(WORLD_HEIGHT//10):
+        cell_matrix.append([])
+        utility_matrix.append([])
+        for _ in range(WORLD_WIDTH//10):
+            cell_matrix[y].append("")
+            utility_matrix[y].append("")
+    ###print(len(cell_matrix[0]))
 
     def __init__(self):
-        # general settings
-        self.WORLD_WIDTH = 2000
-        self.WORLD_HEIGHT = 1000
+
 
         # colors
         self.colors = {
@@ -32,38 +42,58 @@ class General():
             "PURPLE" : (120, 60, 125), #10
             "YELLOW" : (220, 230, 80), #11
             "BROWN" : (120, 95, 60), #12
-            "BRIGHT_BROWN" : (200, 160, 50) # 13
+            "BRIGHT_BROWN" : (200, 160, 50), #13
+            "DARK_BROWN" : (50, 25, 0), #14
+            "ALGEA_BLUE" : (160, 225, 235) #15
         }
 
-        for y in range(self.WORLD_HEIGHT//10):
-            General.cell_matrix.append([])
-            General.utility_matrix.append([])
-            for _ in range(self.WORLD_WIDTH//10):
-                General.cell_matrix[y].append("")
-                General.utility_matrix[y].append("")
 
-
-        self.starting_generation_producer_cell_count: int = 500
+        self.starting_generation_producer_cell_count: int = 1500
         self.starting_generation_predator_cell_count: int = 1
 
-    def random_position(self) -> tuple[int, int]:
+        self.one_to_one_zone: list[tuple[int, int]] = [(-1, -1), (-1, 0), (-1, 1), 
+                                           (0, -1), (0, 1), 
+                                           (1, -1), (1, 0), (1, 1)]
+        self.zwo_to_zwo_zone: list[tuple[int, int]] = [(-2, -2), (-2, -1), (-2, 0), (-2, 1), (-2, 2), 
+                                           (-1, -2), (-1, -1), (-1, 0), (-1, 1), (-1, 2), 
+                                           (0, -2), (0, -1), (0, 1), (0, 2), 
+                                           (1, -2), (1, -1), (1, 0), (1, 1), (1, 2), 
+                                           (2, -2), (2, -1), (2, 0), (2, 1), (2, 2)]
+        self.three_to_three_zone: list[tuple[int, int]] = [(-3, -3), (-3, -2), (-3, -1), (-3, 0), (-3, 1), (-3, 2), (-3, 3), 
+                                               (-2, -3), (-2, -2), (-2, -1), (-2, 0), (-2, 1), (-2, 2), (-2, 3), 
+                                               (-1, -3), (-1, -2), (-1, -1), (-1, 0), (-1, 1), (-1, 2), (-1, 3), 
+                                               (0, -3), (0, -2), (0, -1), (0, 1), (0, 2), (0, 3), 
+                                               (1, -3), (1, -2), (1, -1), (1, 0), (1, 1), (1, 2), (1, 3), 
+                                               (2, -3), (2, -2), (2, -1), (2, 0), (2, 1), (2, 2), (2, 3), 
+                                               (3, -3), (3, -2), (3, -1), (3, 0), (3, 1), (3, 2), (3, 3)]
+        self.four_to_four_zone: list[tuple[int, int]] = [(-4, -4), (-4, -3), (-4, -2), (-4, -1), (-4, 0), (-4, 1), (-4, 2), (-4, 3), (-4, 4), 
+                                             (-3, -4), (-3, -3), (-3, -2), (-3, -1), (-3, 0), (-3, 1), (-3, 2), (-3, 3), (-3, 4), 
+                                             (-2, -4), (-2, -3), (-2, -2), (-2, -1), (-2, 0), (-2, 1), (-2, 2), (-2, 3), (-2, 4), 
+                                             (-1, -4), (-1, -3), (-1, -2), (-1, -1), (-1, 0), (-1, 1), (-1, 2), (-1, 3), (-1, 4), 
+                                             (0, -4), (0, -3), (0, -2), (0, -1), (0, 1), (0, 2), (0, 3), (0, 4), 
+                                             (1, -4), (1, -3), (1, -2), (1, -1), (1, 0), (1, 1), (1, 2), (1, 3), (1, 4), 
+                                             (2, -4), (2, -3), (2, -2), (2, -1), (2, 0), (2, 1), (2, 2), (2, 3), (2, 4), 
+                                             (3, -4), (3, -3), (3, -2), (3, -1), (3, 0), (3, 1), (3, 2), (3, 3), (3, 4), 
+                                             (4, -4), (4, -3), (4, -2), (4, -1), (4, 0), (4, 1), (4, 2), (4, 3), (4, 4)]
+        self.five_to_five_zone: list[tuple[int, int]] = [(-5, -5), (-5, -4), (-5, -3), (-5, -2), (-5, -1), (-5, 0), (-5, 1), (-5, 2), (-5, 3), (-5, 4), (-5, 5), 
+                                             (-4, -5), (-4, -4), (-4, -3), (-4, -2), (-4, -1), (-4, 0), (-4, 1), (-4, 2), (-4, 3), (-4, 4), (-4, 5), 
+                                             (-3, -5), (-3, -4), (-3, -3), (-3, -2), (-3, -1), (-3, 0), (-3, 1), (-3, 2), (-3, 3), (-3, 4), (-3, 5), 
+                                             (-2, -5), (-2, -4), (-2, -3), (-2, -2), (-2, -1), (-2, 0), (-2, 1), (-2, 2), (-2, 3), (-2, 4), (-2, 5), 
+                                             (-1, -5), (-1, -4), (-1, -3), (-1, -2), (-1, -1), (-1, 0), (-1, 1), (-1, 2), (-1, 3), (-1, 4), (-1, 5), 
+                                             (0, -5), (0, -4), (0, -3), (0, -2), (0, -1), (0, 1), (0, 2), (0, 3), (0, 4), (0, 5), 
+                                             (1, -5), (1, -4), (1, -3), (1, -2), (1, -1), (1, 0), (1, 1), (1, 2), (1, 3), (1, 4), (1, 5), 
+                                             (2, -5), (2, -4), (2, -3), (2, -2), (2, -1), (2, 0), (2, 1), (2, 2), (2, 3), (2, 4), (2, 5), 
+                                             (3, -5), (3, -4), (3, -3), (3, -2), (3, -1), (3, 0), (3, 1), (3, 2), (3, 3), (3, 4), (3, 5), 
+                                             (4, -5), (4, -4), (4, -3), (4, -2), (4, -1), (4, 0), (4, 1), (4, 2), (4, 3), (4, 4), (4, 5), 
+                                             (5, -5), (5, -4), (5, -3), (5, -2), (5, -1), (5, 0), (5, 1), (5, 2), (5, 3), (5, 4), (5, 5)]
 
-        # loop continues until an unoccupied coordinates are generated
-        while True:
-
-            x_position: int = random.randint(0, self.WORLD_WIDTH//10-1)
-            y_position: int = random.randint(0, self.WORLD_HEIGHT//10-1)
-
-            if not(self.cell_matrix[y_position][x_position]):
-                break
-
-        return (x_position, y_position)
+        self.map_matrix = map_matrix
     
     def is_movement_possible(self, starting_x: int, starting_y: int, dx: int, dy: int) -> bool:
 
         # check if the new position is not out of bounds
         #   is not occupied
         if (0 <= starting_x + dx <= self.WORLD_WIDTH // 10 - 1) and (0 <= starting_y + dy <= self.WORLD_HEIGHT // 10 - 1) and \
-            (starting_x + dx, starting_y + dy) not in self.cell_occupied_positions:
+            not(self.cell_matrix[starting_y + dy][starting_x + dx]):
             return True
         return False
