@@ -49,6 +49,10 @@ class Display():
         
         self.running = True
 
+        # use it to stop the simulation
+        self.run_speed: int = 200
+        self.stop_speed: int = 1
+
         # input the background map from the user, default is the 0 (=grid map)
         self.choosen_map = 0
         # input the utility map from the user, default is the 0 (=no utility)
@@ -60,6 +64,9 @@ class Display():
         # produce the starting generations
         self.producer_cell.generate_producerCells()
         self.predator_cell.generate_predatorCells()
+        print(self.predator_cell.predator_cell_list[0].food_sense_zone)
+        print(self.predator_cell.predator_cell_list[0].life_expectancy)
+        print(self.predator_cell.predator_cell_list[0].produce_amount)
 
 
     def handle_input(self) -> None:
@@ -191,7 +198,7 @@ class Display():
                 else:
                     print("yarra")
             if not(color):
-                color = self.general.colors["BLACK"]
+                color = self.general.colors["PINK"]
             pygame.draw.rect(self.world, color, (cell.position_x*10+2, cell.position_y*10+2, 6, 6))
 
     def draw_utilities(self) -> None:
@@ -208,7 +215,9 @@ class Display():
                         pygame.draw.rect(self.world, color, (x+2, y+2, 6, 6))
                         color = ()
 
-    def run(self):     
+    def run(self):
+
+        speed = self.run_speed     
         
         while self.running:
 
@@ -232,8 +241,11 @@ class Display():
                         self.choosen_utility_map = 0
                     elif event.key == pygame.K_KP1:
                         self.choosen_utility_map = 1
-
-
+                    if event.key == pygame.K_SPACE:
+                        if speed == self.run_speed:
+                            speed = self.stop_speed
+                        else:
+                            speed = self.run_speed
 
                 # mouse keys
                 if event.type == pygame.MOUSEBUTTONDOWN:
@@ -265,20 +277,17 @@ class Display():
             
             # moving logic
             for predator_cell in Predator_Cell.predator_cell_list:
-                ###print(f"Before the movement {predator_cell.position_x,predator_cell.position_y}")
                 predator_cell.random_move_cells(predator_cell)
                 
 
             # draw the utilities
-            self.producer_cell.produce_food()
+            for producer_cell in self.producer_cell.producer_cell_list:
+                producer_cell.produce_food(producer_cell)
 
             pygame.display.update()
-            self.clock.tick(20)
+            self.clock.tick(speed)
 
         pygame.quit()
-
-
-
 
 
 
