@@ -17,11 +17,11 @@ class Predator_Cell():
         self.random_movement: bool = True
 
         # attributes which are not gene-dependent
-        self.food_supply: int = 50  # 1 = hungry, 100 = full
+        self.food_supply: int = 20  # 1 = hungry, 100 = full
 
         # attributes which are gene-dependent for each cell 
         self.food_sense_zone: int = random.randint(1, 5)  # 1 = smalles, 5 = biggest
-        self.life_expectancy: int = random.randint(500, 25000) # 500 = shortest, 25000 = longest
+        self.life_expectancy: int = random.randint(500, 5000) # 500 = shortest, 25000 = longest
         self.produce_amount: int = random.randint(1, 8) # 1 = worst, 8 = best
     
         self.mutation_limits: dict = {
@@ -49,10 +49,11 @@ class Predator_Cell():
             return
         else:
             predator_cell.get_old(predator_cell)
+            print(predator_cell.age)
 
         # check whether the cell wants to reproduce
-        if predator_cell.food_supply > 90:
-            predator_cell.reproduce(predator_cell)
+        """if predator_cell.food_supply > 90:
+            predator_cell.reproduce(predator_cell)"""
 
         # Only look for food if not full
         if predator_cell.food_supply < 100:  # Changed from 100 to more reasonable value
@@ -117,11 +118,11 @@ class Predator_Cell():
         if (predator_cell.food_supply < 100 and  # Changed from 100
             predator_cell.general.utility_matrix[predator_cell.position_y][predator_cell.position_x] == "F"):
             predator_cell.eat_food(predator_cell)
-            print(predator_cell.food_supply)
+            #?print(predator_cell.food_supply)
             predator_cell.general.utility_matrix[predator_cell.position_y][predator_cell.position_x] = ""
 
         # check if the cell wants to shit
-        if predator_cell.food_supply > 50 and (random.randint(1, 100000) < 10**(predator_cell.food_supply-50)):
+        if predator_cell.food_supply > 50 and (random.randint(1, pow(10, 50)) < 10**(predator_cell.food_supply-50)):
             predator_cell.shit(predator_cell)
 
 
@@ -161,7 +162,7 @@ class Predator_Cell():
     def shit(self, predator_cell: "Predator_Cell") -> None:
 
         # empty the stomach
-        predator_cell.food_supply -= 5
+        predator_cell.food_supply -= 50
 
         # mark the shitted positions as "S"
         predator_cell.general.utility_matrix[predator_cell.position_y][predator_cell.position_x] = "S"
@@ -197,45 +198,71 @@ class Predator_Cell():
         predator_cell.age += 1
 
     def reproduce(self, predator_cell: "Predator_Cell") -> None:
+        # Determine number of children based on produce_amount
+        num_children = predator_cell.produce_amount
 
-        # transfer the one_to_one_zone to neighboring_cells and shuffle it
-        neighboring_cells: list[tuple[int, int]] = predator_cell.general.one_to_one_zone
-        random.shuffle(neighboring_cells)
+        # Create children
+        for _ in range(num_children):
+            # Create a new predator cell
+            new_cell = Predator_Cell(predator_cell.general)
 
-        # go over all the possible locations, until one works then return
-        for _ in range(len(predator_cell.general.one_to_one_zone)):
+            # Find a nearby empty position to place the child
+            possible_positions = [
+                (predator_cell.position_x + dx, predator_cell.position_y + dy)
+                for dx, dy in [(0, 1), (0, -1), (1, 0), (-1, 0), (1, 1), (-1, 1), (-1, -1), (1, -1)]
+            ]
 
-            # check the first element of the shuffled list
-            dx, dy = neighboring_cells[0]
-            
+            # Shuffle positions to add randomness
+            random.shuffle(possible_positions)
 
-            if predator_cell.is_movement_possible_predatorCell(predator_cell.position_x, predator_cell.position_y, dx, dy, predator_cell):
+            # Find a valid position for the child
+            for x, y in possible_positions:
+                if predator_cell.is_movement_possible_predatorCell(x, y, 0, 0, predator_cell):
+                    new_cell.position_x, new_cell.position_y = x, y
+                    
+                    # Add the new cell to relevant lists and matrix
+                    predator_cell.general.all_cells.append(new_cell)
+                    predator_cell.predator_cell_list.append(new_cell)
+                    predator_cell.general.cell_matrix[y][x] = "C"
 
-                # if the dx and dy valid move delete it from the temporary list
-                del neighboring_cells[0]
+                    # Potentially mutate the child's attributes
+                    for attr in ["food_sense_zone", "life_expectancy", "produce_amount"]:
+                        setattr(new_cell, attr, predator_cell.mutate(new_cell, attr))
+                        
+                    break
 
-                # create a child with the tested positions
-                child_cell = Predator_Cell(self.general)
-                child_cell.position_x, child_cell.position_y = predator_cell.position_x+dx, predator_cell.position_y+dy
-
-                # inheriting the attributes from the parent cell
-
-                # add them to matrixes and cells
-                predator_cell.general.all_cells.append(child_cell)
-                predator_cell.general.cell_matrix[predator_cell.position_y+dy][predator_cell.position_x+dx] = "C"
-                predator_cell.predator_cell_list.append(child_cell)
-            
-            # check whether the produce_amount is reached
-            if predator_cell.produce_amount == (len(predator_cell.general.one_to_one_zone)-len(neighboring_cells)):
-                return
+        # Reduce food supply after reproduction
+        predator_cell.food_supply -= 70
 
     def mutate(self, predator_cell: "Predator_Cell", attribute: str) -> int:
-
+        # Get the current value of the attribute
+        current_value = getattr(predator_cell, attribute)
+        
+        # Get the minimum and maximum limits for the attribute
         minimum, maximum = predator_cell.mutation_limits[attribute]
-
-        pass
+        
+        # Mutation probability and magnitude
+        mutation_chance = 0.2  # 20% chance of mutation
+        mutation_magnitude = 1  # Amount of variation
+        
+        # Randomly decide whether to mutate
+        if random.random() < mutation_chance:
+            # Randomly choose to increase or decrease
+            if random.random() < 0.5:
+                # Increase value
+                mutated_value = current_value + random.randint(0, mutation_magnitude)
+            else:
+                # Decrease value
+                mutated_value = current_value - random.randint(0, mutation_magnitude)
             
-
+            # Ensure the mutated value stays within the defined limits
+            mutated_value = max(minimum, min(maximum, mutated_value))
+            
+            return mutated_value
+        
+        # If no mutation occurs, return the original value
+        return current_value
+            
 
 
 
