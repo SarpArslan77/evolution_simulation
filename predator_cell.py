@@ -2,13 +2,11 @@ import random
 
 from general import General
 
-
-#TODO shitting mechanic is broken, it shits when it eats
 #TODO cell can get stuck when there are occupying cells in the distance and it senses a food after those occupying cells (blocking)
 
 class Predator_Cell():
 
-    predator_cell_list: list = []
+    predator_cell_list: list["Predator_Cell"] = []
 
     def __init__(self, general: General):
         self.position_x, self.position_y = 0, 0
@@ -26,13 +24,17 @@ class Predator_Cell():
     
         self.mutation_limits: dict = {
             "food_sense_zone" : (1, 5),
-            "life_expectancy" : (500, 25000),
+            "life_expectancy" : (500, 5000),
             "produce_amount" : (1, 8)
         }
 
-    def random_move_cells(self, predator_cell: "Predator_Cell") -> None:
-        # Clear old position
-        predator_cell.general.cell_matrix[predator_cell.position_y][predator_cell.position_x] = ""
+        self.mutation_amounts: dict = {
+            "food_sense_zone" : 1,
+            "life_expectancy" : 500,
+            "produce_amount" : 1
+        }
+
+    def main_loop_predatorCell(self, predator_cell: "Predator_Cell") -> None:
 
         # get old and check whether the cell is RIP
         #   chance of its dying increase when the cell's age pasts its life expectancy
@@ -52,20 +54,20 @@ class Predator_Cell():
             print(predator_cell.age)
 
         # check whether the cell wants to reproduce
-        """if predator_cell.food_supply > 90:
-            predator_cell.reproduce(predator_cell)"""
+        if predator_cell.food_supply > 90:
+            predator_cell.reproduce(predator_cell)
 
         # Only look for food if not full
         if predator_cell.food_supply < 100:  # Changed from 100 to more reasonable value
             # Get appropriate zone based on sense level
-            zone_mapping = {
+            zone_mapping: dict = {
                 1: predator_cell.general.one_to_one_zone,
                 2: predator_cell.general.zwo_to_zwo_zone,
                 3: predator_cell.general.three_to_three_zone,
                 4: predator_cell.general.four_to_four_zone,
                 5: predator_cell.general.five_to_five_zone
             }
-            zone = zone_mapping.get(predator_cell.food_sense_zone, predator_cell.general.three_to_three_zone)
+            zone = zone_mapping.get(predator_cell.food_sense_zone, None)
 
             # Filter valid coordinates
             valid_zone = [coord for coord in zone if 
@@ -95,6 +97,10 @@ class Predator_Cell():
                 # Check if movement is possible
                 if predator_cell.is_movement_possible_predatorCell(
                     predator_cell.position_x, predator_cell.position_y, dx, dy, predator_cell):
+
+                    # Clear old position
+                    predator_cell.general.cell_matrix[predator_cell.position_y][predator_cell.position_x] = ""
+
                     predator_cell.position_x += dx
                     predator_cell.position_y += dy
                     predator_cell.random_movement = False
@@ -107,6 +113,10 @@ class Predator_Cell():
             for dx, dy in directions:
                 if predator_cell.is_movement_possible_predatorCell(
                     predator_cell.position_x, predator_cell.position_y, dx, dy, predator_cell):
+
+                    # Clear old position
+                    predator_cell.general.cell_matrix[predator_cell.position_y][predator_cell.position_x] = ""
+
                     predator_cell.position_x += dx
                     predator_cell.position_y += dy
                     break
@@ -235,6 +245,7 @@ class Predator_Cell():
         predator_cell.food_supply -= 70
 
     def mutate(self, predator_cell: "Predator_Cell", attribute: str) -> int:
+
         # Get the current value of the attribute
         current_value = getattr(predator_cell, attribute)
         
@@ -242,11 +253,11 @@ class Predator_Cell():
         minimum, maximum = predator_cell.mutation_limits[attribute]
         
         # Mutation probability and magnitude
-        mutation_chance = 0.2  # 20% chance of mutation
-        mutation_magnitude = 1  # Amount of variation
+        mutation_chance = 1  # 1% chance of mutation
+        mutation_magnitude = predator_cell.mutation_amounts[attribute]
         
         # Randomly decide whether to mutate
-        if random.random() < mutation_chance:
+        if random.randint(1, 100) < mutation_chance:
             # Randomly choose to increase or decrease
             if random.random() < 0.5:
                 # Increase value
