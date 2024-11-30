@@ -2,17 +2,16 @@ from general import General
 
 import random
 
-#! finish the reproduce logic, copy the predator_cell one and adapt
+#TODO: add life expectancy
+#TODO: create a function for the zone mapping general
 
 class Producer_Cell():
 
-    producer_cell_list: list = []
+    producer_cell_list: list["Producer_Cell"] = []
 
     def __init__(self, general: General):
         self.position_x, self.position_y = 0, 0
         self.general = general
-
-        self.producer_cell_list: list[Producer_Cell] = []
 
         # attributes which are gene-dependent for each cell 
         #   if a int is assigned, which means it is in test section and does not get inherited from its parent cell
@@ -26,6 +25,30 @@ class Producer_Cell():
 
         # 1 = worst, 8 = best
         self.produce_amount: int = random.randint(1, 8)
+
+        # 1 = worst, 5 = best
+        self.shit_sense_zone: int = random.randint(1, 5)
+
+        self.mutation_limits: dict = {
+            "food_production_speed" : (1, 10),
+            "food_production_zone" : (1, 5),
+            "produce_amount" : (1, 8),
+            "shit_sense_zone" : (1, 5)
+        }
+
+        self.mutation_amount: dict = {
+            "food_production_speed" : 1,
+            "food_production_zone" : 1,
+            "produce_amount" : 1,
+            "shit_sense_zone" : 1
+        }
+
+    def main_loop_producerCell(self, producer_cell: "Producer_Cell"):
+
+        # first check whether the cell wants to reproduce, (zone_mapping add shit condition, this many available)
+
+        # produce food
+        producer_cell.produce_food(producer_cell)
 
     def generate_producerCells(self) -> None:
         for _ in range(self.general.starting_generation_producer_cell_count):
@@ -75,12 +98,14 @@ class Producer_Cell():
 
     def reproduce(self, producer_cell: "Producer_Cell") -> None:
 
+        # create the amount of children according to produce_amount
         num_children = producer_cell.produce_amount
 
         for _ in range(num_children):
 
             new_cell = Producer_Cell(producer_cell.general)
 
+            # get the possible locations in a list
             possible_positions: list[tuple[int, int]] = [
                 (producer_cell.position_x + dx, producer_cell.position_y + dy)
                 for dx, dy in [(0, 1), (0, -1), (1, 0), (-1, 0), (1, 1), (-1, 1), (-1, -1), (1, -1)]
@@ -88,6 +113,36 @@ class Producer_Cell():
 
             random.shuffle(possible_positions)
 
+            # check whether they are available
+            for x, y in possible_positions:
+                if producer_cell.is_available(x, y, 0, 0, producer_cell):
+                    new_cell.position_x, new_cell.position_y = x, y
+                    new_cell.food_production_speed = producer_cell.food_production_speed
+
+
+                    for attr in ["food_production_speed", "food_production_zone", "produce_amount", "shit_sense_zone"]:
+                        setattr(new_cell, attr, producer_cell.mutate(new_cell, attr))
+
+                    producer_cell.general.all_cells.append(new_cell)
+                    producer_cell.producer_cell_list.append(new_cell)
+                    producer_cell.general.cell_matrix[y][x] = "P"
+
+                    break
+        
+        # map the possible zones
+        zone_mapping: dict = {
+            1: producer_cell.general.one_to_one_zone,
+            2: producer_cell.general.zwo_to_zwo_zone,
+            3: producer_cell.general.three_to_three_zone,
+            4: producer_cell.general.four_to_four_zone,
+            5: producer_cell.general.five_to_five_zone
+        }
+        zone = zone_mapping.get(producer_cell.shit_sense_zone, None)
+
+        # zones that have shits(necessary for the reproduction) are gone, so kinda used
+        for x, y in zone:
+            if producer_cell.general.utility_matrix[producer_cell.position_y+y][producer_cell.position_x+x] == "S":
+                producer_cell.general.utility_matrix[producer_cell.position_y+y][producer_cell.position_x+x] = ""
 
     def is_available(self, starting_x: int, starting_y: int, dx: int, dy: int, producer_cell: "Producer_Cell") -> bool:
 
@@ -102,7 +157,34 @@ class Producer_Cell():
         
         return False
 
+    def mutate(self, producer_cell: "Producer_Cell", attribute: str) -> int:
+        # Get the current value of the attribute
+        current_value = getattr(producer_cell, attribute)
         
+        # Get the minimum and maximum limits for the attribute
+        minimum, maximum = producer_cell.mutation_limits[attribute]
+        
+        # Mutation probability and magnitude
+        mutation_chance = 1  # 1% chance of mutation
+        mutation_magnitude = producer_cell.mutation_amount[attribute]
+        
+        # Randomly decide whether to mutate
+        if random.randint(1, 100) < mutation_chance:
+            # Randomly choose to increase or decrease
+            if random.random() < 0.5:
+                # Increase value
+                mutated_value = current_value + random.randint(0, mutation_magnitude)
+            else:
+                # Decrease value
+                mutated_value = current_value - random.randint(0, mutation_magnitude)
+            
+            # Ensure the mutated value stays within the defined limits
+            mutated_value = max(minimum, min(maximum, mutated_value))
+            
+            return mutated_value
+        
+        # If no mutation occurs, return the original value
+        return current_value
 
 
 
