@@ -9,6 +9,8 @@ from predator_cell import Predator_Cell
 from producer_cell import Producer_Cell
 from general import General
 
+#TODO: correct the type hints for each function/variable, everything should be yellow
+
 class Display():
     def __init__(self, general: General, predator_cell: Predator_Cell, producer_cell: Producer_Cell):
 
@@ -275,14 +277,14 @@ class Display():
             # draw the cells
             self.draw_cells()
             
-            # moving logic
+            # main loop for predator_cel
             for predator_cell in Predator_Cell.predator_cell_list:
-                predator_cell.random_move_cells(predator_cell)
+                predator_cell.main_loop_predatorCell(predator_cell)
                 
 
             # draw the utilities
-            for producer_cell in self.producer_cell.producer_cell_list:
-                producer_cell.produce_food(producer_cell)
+            for producer_cell in Producer_Cell.producer_cell_list:
+                producer_cell.main_loop_producerCell(producer_cell)
 
             pygame.display.update()
             self.clock.tick(speed)
