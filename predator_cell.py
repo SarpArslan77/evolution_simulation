@@ -4,6 +4,7 @@ from general import General
 
 #TODO cell can get stuck when there are occupying cells in the distance and it senses a food after those occupying cells (blocking)
 
+
 class Predator_Cell():
 
     predator_cell_list: list["Predator_Cell"] = []
@@ -34,6 +35,8 @@ class Predator_Cell():
             "produce_amount" : 1
         }
 
+        self.position_memory: list[tuple[int, int]] = []
+
     def main_loop_predatorCell(self, predator_cell: "Predator_Cell") -> None:
 
         # get old and check whether the cell is RIP
@@ -51,7 +54,6 @@ class Predator_Cell():
             return
         else:
             predator_cell.get_old(predator_cell)
-            print(predator_cell.age)
 
         # check whether the cell wants to reproduce
         if predator_cell.food_supply > 90:
@@ -128,7 +130,7 @@ class Predator_Cell():
         if (predator_cell.food_supply < 100 and  # Changed from 100
             predator_cell.general.utility_matrix[predator_cell.position_y][predator_cell.position_x] == "F"):
             predator_cell.eat_food(predator_cell)
-            #?print(predator_cell.food_supply)
+            ###print(predator_cell.food_supply)
             predator_cell.general.utility_matrix[predator_cell.position_y][predator_cell.position_x] = ""
 
         # check if the cell wants to shit
@@ -136,8 +138,9 @@ class Predator_Cell():
             predator_cell.shit(predator_cell)
 
 
-        # Mark new position
+        # mark new position and add it to its position memory
         predator_cell.general.cell_matrix[predator_cell.position_y][predator_cell.position_x] = "C"
+        predator_cell.position_memory.append((predator_cell.position_x, predator_cell.position_y))
 
     def generate_predatorCells(self) -> None:
         for _ in range(self.general.starting_generation_predator_cell_count):
@@ -148,6 +151,7 @@ class Predator_Cell():
             self.general.all_cells.append(new_cell)
             self.general.cell_matrix[y_position][x_position] = "C"
             self.predator_cell_list.append(new_cell)
+            self.position_memory.append((x_position, y_position))
 
     def eat_food(self, predator_cell: "Predator_Cell") -> None:
         if predator_cell.food_supply < 100:  # Changed from 100
@@ -228,12 +232,18 @@ class Predator_Cell():
             # Find a valid position for the child
             for x, y in possible_positions:
                 if predator_cell.is_movement_possible_predatorCell(x, y, 0, 0, predator_cell):
+
                     new_cell.position_x, new_cell.position_y = x, y
+                    #inhabit the attributes
+                    new_cell.food_sense_zone = predator_cell.food_sense_zone
+                    new_cell.life_expectancy = predator_cell.life_expectancy
+                    new_cell.produce_amount = predator_cell.produce_amount
                     
                     # Add the new cell to relevant lists and matrix
                     predator_cell.general.all_cells.append(new_cell)
                     predator_cell.predator_cell_list.append(new_cell)
                     predator_cell.general.cell_matrix[y][x] = "C"
+                    predator_cell.position_memory.append((x, y))
 
                     # Potentially mutate the child's attributes
                     for attr in ["food_sense_zone", "life_expectancy", "produce_amount"]:
