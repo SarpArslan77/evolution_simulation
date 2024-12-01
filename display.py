@@ -9,7 +9,7 @@ from predator_cell import Predator_Cell
 from producer_cell import Producer_Cell
 from general import General
 
-#TODO: correct the type hints for each function/variable, everything should be yellow
+#? correct the type hints for each function/variable, everything should be yellow
 
 class Display():
     def __init__(self, general: General, predator_cell: Predator_Cell, producer_cell: Producer_Cell):
@@ -66,9 +66,9 @@ class Display():
         # produce the starting generations
         self.producer_cell.generate_producerCells()
         self.predator_cell.generate_predatorCells()
-        print(self.predator_cell.predator_cell_list[0].food_sense_zone)
+        """print(self.predator_cell.predator_cell_list[0].food_sense_zone)
         print(self.predator_cell.predator_cell_list[0].life_expectancy)
-        print(self.predator_cell.predator_cell_list[0].produce_amount)
+        print(self.predator_cell.predator_cell_list[0].produce_amount)"""
 
 
     def handle_input(self) -> None:
@@ -225,7 +225,6 @@ class Display():
 
             # event handling part
             for event in pygame.event.get():
-
                 # quit the session
                 if event.type == pygame.QUIT:
                     self.running = False
@@ -253,6 +252,7 @@ class Display():
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     x, y = pygame.mouse.get_pos()
                     ###print(x, y)
+                    self.general.utility_matrix[y//10][x//10] = "S"
 
                 elif event.type == pygame.VIDEORESIZE and not self.is_fullscreen:
                     self.handle_resize(event)
@@ -285,6 +285,8 @@ class Display():
             # draw the utilities
             for producer_cell in Producer_Cell.producer_cell_list:
                 producer_cell.main_loop_producerCell(producer_cell)
+
+            print(len(self.producer_cell.producer_cell_list))
 
             pygame.display.update()
             self.clock.tick(speed)
