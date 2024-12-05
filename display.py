@@ -1,5 +1,4 @@
 
-
 import pygame
 import sys
 import random
@@ -8,15 +7,18 @@ from depot import map_matrix
 from predator_cell import Predator_Cell
 from producer_cell import Producer_Cell
 from general import General
+from saprophyte import Saprophyte
 
 #? correct the type hints for each function/variable, everything should be yellow
+#! fix the saprophyte generation function
 
 class Display():
-    def __init__(self, general: General, predator_cell: Predator_Cell, producer_cell: Producer_Cell):
+    def __init__(self, general: General, predator_cell: Predator_Cell, producer_cell: Producer_Cell, saprophyte: Saprophyte):
 
         self.general = general
         self.predator_cell = predator_cell
         self.producer_cell = producer_cell
+        self.saprophyte = saprophyte
 
         # Initialize pygame
         pygame.init()
@@ -133,6 +135,7 @@ class Display():
             "1: Biom Map",
             "NUM0: Without Utilities",
             "NUM1: Food",
+            "NUM9: Producer Cell Attributes",
             "ESC: Exit"
         ]
         
@@ -197,10 +200,18 @@ class Display():
                     color = self.general.colors["GREEN"]
                 elif self.biom_map_matrix[cell.position_y][cell.position_x] == 8:
                     color = self.general.colors["ALGEA_BLUE"]
+                elif self.biom_map_matrix[cell.position_y][cell.position_x] == 9:
+                    color = self.general.colors["ALGEA_BLUE"]
+                elif self.biom_map_matrix[cell.position_y][cell.position_x] == 10:
+                    color = self.general.colors["BRIGHT_PURPLE"]
+                elif self.biom_map_matrix[cell.position_y][cell.position_x] == 4:
+                    color = self.general.colors["ORANGE"]
                 else:
                     print("yarra")
-            if not(color):
+            elif type(cell) == Saprophyte:
                 color = self.general.colors["PINK"]
+            if not(color):
+                color = self.general.colors["PINK"] ### DEBUGGING
             pygame.draw.rect(self.world, color, (cell.position_x*10+2, cell.position_y*10+2, 6, 6))
 
     def draw_utilities(self) -> None:
@@ -213,6 +224,8 @@ class Display():
                         color = self.general.colors["BRIGHT_BROWN"]
                     elif self.general.utility_matrix[y//10][x//10] == "S":
                         color = self.general.colors["DARK_BROWN"]
+                    elif self.general.utility_matrix[y//10][x//10] == "G":
+                        color = self.general.colors["GOLD"]
                     if color:
                         pygame.draw.rect(self.world, color, (x+2, y+2, 6, 6))
                         color = ()
@@ -281,12 +294,18 @@ class Display():
             for predator_cell in Predator_Cell.predator_cell_list:
                 predator_cell.main_loop_predatorCell(predator_cell)
                 
-
-            # draw the utilities
+            # main loop for producer_cell
             for producer_cell in Producer_Cell.producer_cell_list:
                 producer_cell.main_loop_producerCell(producer_cell)
 
-            print(len(self.producer_cell.producer_cell_list))
+            # create saprophytes according to conditions
+            Saprophyte.generate_saprophyte()
+
+            # main loop for saprophyte
+            for saprophyte in Saprophyte.saprophyte_cell_list:
+                saprophyte.main_loop_saprophyte(saprophyte)
+
+            ###print(len(self.producer_cell.producer_cell_list))
 
             pygame.display.update()
             self.clock.tick(speed)
@@ -299,5 +318,6 @@ if __name__ == "__main__":
     general = General()
     cell = Predator_Cell(general)
     producer_cell = Producer_Cell(general)
-    map = Display(general, cell, producer_cell)
+    saprophyte = Saprophyte(general)
+    map = Display(general, cell, producer_cell, saprophyte)
     map.run()
