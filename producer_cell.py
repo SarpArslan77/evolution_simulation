@@ -1,9 +1,12 @@
 from general import General
+from utility import Shit
 
 import random
 import csv
 import os
 import numpy as np
+
+
 
 #TODO: add the average of everything in csv file at the end also be able to show it on the screen
 
@@ -19,10 +22,11 @@ class Producer_Cell():
         "life_expectancy" : 0
     }
 
-    def __init__(self, general: General):
+    def __init__(self, general: General, shit_ins: Shit):
         self.position_x, self.position_y = 0, 0
         self.age: int = 0
         self.general = general
+        self.shit_ins = shit_ins
         self.csv_file_name: str = "data_of_producerCells.csv"
 
         # attributes which are gene-dependent for each cell 
@@ -66,6 +70,9 @@ class Producer_Cell():
 
             # set the dead position as as shit
             producer_cell.general.utility_matrix[producer_cell.position_y][producer_cell.position_x] = "S"
+            new_shit = Shit(self.general.colors["BLACK"], "S")
+            new_shit.position_x, new_shit.position_y = producer_cell.position_x, producer_cell.position_y
+            producer_cell.shit_ins.all_shit_list.append(new_shit)
 
             # remove the cell from existence, RIP little cellito :( o7
             producer_cell.general.all_cells.remove(producer_cell)
@@ -99,7 +106,7 @@ class Producer_Cell():
         for _ in range(self.general.starting_generation_producer_cell_count):
 
             x_position, y_position = self.random_position_producerCells()
-            new_cell: Producer_Cell = Producer_Cell(self.general)
+            new_cell: Producer_Cell = Producer_Cell(self.general, self.shit_ins)
             new_cell.position_x, new_cell.position_y = x_position, y_position
 
             # all created cells must be added into the general cell list and general cell matrix
@@ -153,7 +160,7 @@ class Producer_Cell():
         for _ in range(num_children):
             ###print(f"{_}.child")
 
-            new_cell = Producer_Cell(producer_cell.general)
+            new_cell = Producer_Cell(producer_cell.general, producer_cell.shit_ins)
 
             zone = producer_cell.general.one_to_one_zone[:]
             random.shuffle(zone)
@@ -295,11 +302,11 @@ class Producer_Cell():
 
 
 
-g = General()
+"""g = General()
 father = Producer_Cell(g)
 father.position_y = 50
 father.position_x = 30
 print(father.generate_producerCells())
 print(len(father.producer_cell_list))
 data_to_be_collected = ["food_production_speed", "food_production_zone", "produce_amount", "shit_sense_zone", "life_expectancy"]
-father.create_csv_file()
+father.create_csv_file()"""
