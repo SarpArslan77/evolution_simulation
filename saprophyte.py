@@ -1,6 +1,7 @@
 import random
 
 from general import General
+from utility import Shit
 
 class Saprophyte():
 
@@ -21,19 +22,45 @@ class Saprophyte():
         self.short_term_position_memory: list[tuple[int, int]] = []
 
     @classmethod
-    def generate_saprophyte(cls, shit_positions: list[tuple[int, int]]) -> None: 
+    def generate_saprophyte(cls, shit_positions: list[tuple[int, int]], general: General) -> None: 
 
-        new_cell = Saprophyte(cls.general)
-        cls.position_x, cls.position_y = random.choice(shit_positions)
+        new_cell = Saprophyte(general)
+        new_cell.position_x, new_cell.position_y = random.choice(shit_positions)
 
-        cls.general.all_cells.append(new_cell)
-        cls.general.cell_matrix[cls.position_y][cls.position_x] = "SP"
-        cls.saprophyte_cell_list.append(new_cell)
-        cls.short_term_position_memory((cls.position_x, cls.position_y))
+        new_cell.general.all_cells.append(new_cell)
+        new_cell.general.cell_matrix[new_cell.position_y][new_cell.position_x] = "SP"
+        new_cell.saprophyte_cell_list.append(new_cell)
+        new_cell.short_term_position_memory.append((new_cell.position_x, new_cell.position_y))
 
-        # mark the rest of the shit positions empty
+        # Mark the rest of the shit positions empty and delete from the lists
         for x_position, y_position in shit_positions:
-            cls.general.utility_matrix[y_position][x_position] = ""
+            print(x_position, y_position)
+            new_cell.general.utility_matrix[y_position][x_position] = ""
+
+            # Remove the matching Shit object from the list
+            Shit.all_shit_list = [
+                shit for shit in Shit.all_shit_list
+                if not (shit.position_x == x_position and shit.position_y == y_position)
+            ]
+
+        print("created")
+        print()
+
+    @classmethod
+    def shit_born_chance(cls, general : General, position_x: int, position_y: int) -> tuple[int, list[tuple[int, int]]]:
+
+        # give the amount of shits in a 3x3 area for a born chance
+        possible_zone: list[tuple[int, int]] = [
+            (-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1)
+        ]
+
+        shit_count: int = 1
+        shit_positions: list[tuple[int, int]] = [(position_x, position_y)]
+        for dx, dy in possible_zone:
+            if general.utility_matrix[position_y+dy][position_x+dx] == "S":
+                shit_positions.append((position_x+dx, position_y+dy))
+                shit_count += 1
+        return (shit_count, shit_positions)
 
     def sense_shit(self, saprophyte: "Saprophyte", coordinates: list[tuple[int, int]]) -> list[tuple[int, int]]:
         found_shit_coordinates: list[tuple[int, int]] = []
@@ -42,11 +69,11 @@ class Saprophyte():
             check_x = saprophyte.position_x + dx
             check_y = saprophyte.position_y + dy
 
-        if (0 <= check_y < len(saprophyte.general.utility_matrix) and
-            0 <= check_y < len(saprophyte.general.utility_matrix[0])):
+            if (0 <= check_y < len(saprophyte.general.utility_matrix) and
+                0 <= check_y < len(saprophyte.general.utility_matrix[0])):
 
-            if saprophyte.general.utility_matrix[check_y][check_x] == "S":
-                found_shit_coordinates.append((check_x, check_y))
+                if saprophyte.general.utility_matrix[check_y][check_x] == "S":
+                    found_shit_coordinates.append((check_x, check_y))
 
         return found_shit_coordinates
     
