@@ -1,16 +1,18 @@
 import random
 
 from general import General
+from utility import Shit
 
 
 class Predator_Cell():
 
     predator_cell_list: list["Predator_Cell"] = []
 
-    def __init__(self, general: General):
+    def __init__(self, general: General, shit_ins: Shit):
         self.position_x, self.position_y = 0, 0
         self.age: int = 0 
         self.general = general
+        self.shit_ins = shit_ins
         self.random_movement: bool = True
 
         # attributes which are not gene-dependent
@@ -147,7 +149,7 @@ class Predator_Cell():
     def generate_predatorCells(self) -> None:
         for _ in range(self.general.starting_generation_predator_cell_count):
             x_position, y_position = self.random_position_predatorCell()
-            new_cell = Predator_Cell(self.general)
+            new_cell = Predator_Cell(self.general, self.shit_ins)
             new_cell.position_x, new_cell.position_y = x_position, y_position
 
             self.general.all_cells.append(new_cell)
@@ -180,8 +182,13 @@ class Predator_Cell():
         # empty the stomach
         predator_cell.food_supply -= 50
 
+        # create a shit utility
+        new_shit = Shit(self.general.colors["BLACK"], "S")
+        new_shit.position_x, new_shit.position_y = predator_cell.position_x, predator_cell.position_y
+        predator_cell.shit_ins.all_shit_list.append(new_shit)
+
         # mark the shitted positions as "S"
-        predator_cell.general.utility_matrix[predator_cell.position_y][predator_cell.position_x] = "S"
+        predator_cell.general.utility_matrix[new_shit.position_y][new_shit.position_x] = new_shit.symbol
 
     def random_position_predatorCell(self) -> tuple[int, int]:
 
