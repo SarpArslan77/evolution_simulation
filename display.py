@@ -8,9 +8,13 @@ from predator_cell import Predator_Cell
 from producer_cell import Producer_Cell
 from general import General
 from saprophyte import Saprophyte
+from utility import Shit, Food
+
 
 #? correct the type hints for each function/variable, everything should be yellow
-#! fix the saprophyte generation function
+#TODO add a nitrat level to saprophytes and also general
+#TODO add a new herbivore class and make the relationship between the classes so the system becomes somewhat self sustainable
+
 
 class Display():
     def __init__(self, general: General, predator_cell: Predator_Cell, producer_cell: Producer_Cell, saprophyte: Saprophyte):
@@ -223,7 +227,7 @@ class Display():
                     if self.general.utility_matrix[y//10][x//10] == "F":
                         color = self.general.colors["BRIGHT_BROWN"]
                     elif self.general.utility_matrix[y//10][x//10] == "S":
-                        color = self.general.colors["DARK_BROWN"]
+                        color = self.general.colors["BLACK"]
                     elif self.general.utility_matrix[y//10][x//10] == "G":
                         color = self.general.colors["GOLD"]
                     if color:
@@ -265,7 +269,7 @@ class Display():
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     x, y = pygame.mouse.get_pos()
                     ###print(x, y)
-                    self.general.utility_matrix[y//10][x//10] = "S"
+                    ###self.general.utility_matrix[y//10][x//10] = "S"
 
                 elif event.type == pygame.VIDEORESIZE and not self.is_fullscreen:
                     self.handle_resize(event)
@@ -299,7 +303,10 @@ class Display():
                 producer_cell.main_loop_producerCell(producer_cell)
 
             # create saprophytes according to conditions
-            Saprophyte.generate_saprophyte()
+            for shit in Shit.all_shit_list:
+                born_chance, shit_positions = Saprophyte.shit_born_chance(self.general, shit.position_x, shit.position_y)
+                #if random.randint(2, 10) < pow(2, born_chance):
+                Saprophyte.generate_saprophyte(shit_positions, self.general)
 
             # main loop for saprophyte
             for saprophyte in Saprophyte.saprophyte_cell_list:
@@ -316,8 +323,9 @@ class Display():
 
 if __name__ == "__main__":
     general = General()
-    cell = Predator_Cell(general)
-    producer_cell = Producer_Cell(general)
+    shit_ins = Shit((0, 0, 0), "S")
+    predator_cell = Predator_Cell(general, shit_ins)
+    producer_cell = Producer_Cell(general, shit_ins)
     saprophyte = Saprophyte(general)
-    map = Display(general, cell, producer_cell, saprophyte)
+    map = Display(general, predator_cell, producer_cell, saprophyte)
     map.run()
