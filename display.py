@@ -4,25 +4,33 @@ import sys
 import random
 
 from depot import map_matrix
+from general import General
+
 from predator_cell import Predator_Cell
 from producer_cell import Producer_Cell
-from general import General
+from herbivore import Herbivore
+
 from saprophyte import Saprophyte
+
 from utility import Shit, Food
 
 
+
 #? correct the type hints for each function/variable, everything should be yellow
-#TODO add a nitrat level to saprophytes and also general
-#TODO add a new herbivore class and make the relationship between the classes so the system becomes somewhat self sustainable
+#TODO saprophytes sometimes go through producer_cells
+#TODO   i suppose because the shit is for a very brief of time in the producer cells and therefore overrides the occupied condition, to move towards the food
+#! list already does not ahave the cell, when it should be deleted according to old age
+#!  -> most probably, when they got eaten, sth occurs, idk man
 
 
 class Display():
-    def __init__(self, general: General, predator_cell: Predator_Cell, producer_cell: Producer_Cell, saprophyte: Saprophyte):
+    def __init__(self, general: General, predator_cell: Predator_Cell, producer_cell: Producer_Cell, saprophyte: Saprophyte, herbivore: Herbivore):
 
         self.general = general
         self.predator_cell = predator_cell
         self.producer_cell = producer_cell
         self.saprophyte = saprophyte
+        self.herbivore = herbivore
 
         # Initialize pygame
         pygame.init()
@@ -72,9 +80,7 @@ class Display():
         # produce the starting generations
         self.producer_cell.generate_producerCells()
         self.predator_cell.generate_predatorCells()
-        """print(self.predator_cell.predator_cell_list[0].food_sense_zone)
-        print(self.predator_cell.predator_cell_list[0].life_expectancy)
-        print(self.predator_cell.predator_cell_list[0].produce_amount)"""
+        self.herbivore.generate_herbivore()
 
 
     def handle_input(self) -> None:
@@ -214,6 +220,8 @@ class Display():
                     print("yarra")
             elif type(cell) == Saprophyte:
                 color = self.general.colors["PINK"]
+            elif type(cell) == Herbivore:
+                color = self.general.colors["ORANGE"]
             if not(color):
                 color = self.general.colors["PINK"] ### DEBUGGING
             pygame.draw.rect(self.world, color, (cell.position_x*10+2, cell.position_y*10+2, 6, 6))
@@ -302,17 +310,19 @@ class Display():
             for producer_cell in Producer_Cell.producer_cell_list:
                 producer_cell.main_loop_producerCell(producer_cell)
 
+            # main loop for herbivores
+            for herbivore in Herbivore.herbivore_list:
+                herbivore.main_loop_herbivore(herbivore)
+
             # create saprophytes according to conditions
             for shit in Shit.all_shit_list:
                 born_chance, shit_positions = Saprophyte.shit_born_chance(self.general, shit.position_x, shit.position_y)
-                #if random.randint(2, 10) < pow(2, born_chance):
-                Saprophyte.generate_saprophyte(shit_positions, self.general)
+                if random.randint(2, 250) < pow(2, born_chance):
+                    Saprophyte.generate_saprophyte(shit_positions, self.general)
 
             # main loop for saprophyte
             for saprophyte in Saprophyte.saprophyte_cell_list:
                 saprophyte.main_loop_saprophyte(saprophyte)
-
-            ###print(len(self.producer_cell.producer_cell_list))
 
             pygame.display.update()
             self.clock.tick(speed)
@@ -327,5 +337,6 @@ if __name__ == "__main__":
     predator_cell = Predator_Cell(general, shit_ins)
     producer_cell = Producer_Cell(general, shit_ins)
     saprophyte = Saprophyte(general)
-    map = Display(general, predator_cell, producer_cell, saprophyte)
+    herbivore = Herbivore(general, shit_ins)
+    map = Display(general, predator_cell, producer_cell, saprophyte, herbivore)
     map.run()
