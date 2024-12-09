@@ -22,10 +22,8 @@ class General():
         for _ in range(WORLD_WIDTH//10):
             cell_matrix[y].append("")
             utility_matrix[y].append("")
-    ###print(len(cell_matrix[0]))
 
     def __init__(self):
-
 
         # colors
         self.colors = {
@@ -44,12 +42,19 @@ class General():
             "BROWN" : (120, 95, 60), #12
             "BRIGHT_BROWN" : (200, 160, 50), #13
             "DARK_BROWN" : (50, 25, 0), #14
-            "ALGEA_BLUE" : (160, 225, 235) #15
+            "ALGEA_BLUE" : (160, 225, 235), #15
+            "PINK" : (255, 0, 255), #16
+            "BRIGHT_PURPLE" : (195, 50, 235), #17
+            "ORANGE" : (235, 145, 50), #18
+            "GOLD" : (255, 215, 0), #19
+            
         }
 
 
-        self.starting_generation_producer_cell_count: int = 1500
-        self.starting_generation_predator_cell_count: int = 1
+        self.starting_generation_producer_cell_count: int = 250
+        self.starting_generation_predator_cell_count: int = 0
+
+        self.starting_generation_herbivore_count: int = 5
 
         self.one_to_one_zone: list[tuple[int, int]] = [(-1, -1), (-1, 0), (-1, 1), 
                                            (0, -1), (0, 1), 
@@ -97,3 +102,4 @@ class General():
             not(self.cell_matrix[starting_y + dy][starting_x + dx]):
             return True
         return False
+    
