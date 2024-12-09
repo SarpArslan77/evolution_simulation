@@ -47,6 +47,9 @@ class Predator_Cell():
             # set the dead position as a shit
             predator_cell.general.utility_matrix[predator_cell.position_y][predator_cell.position_x] = "S"
 
+            # set the new position as dead
+            predator_cell.general.cell_matrix[predator_cell.position_y][predator_cell.position_x] = ""
+
             # remove the cell from existence :(
             predator_cell.general.all_cells.remove(predator_cell)
             predator_cell.predator_cell_list.remove(predator_cell)
