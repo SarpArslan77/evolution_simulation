@@ -7,8 +7,9 @@ import os
 import numpy as np
 
 
+#?: add the is available function from general to here
+#?: add the average of everything in csv file at the end also be able to show it on the screen
 
-#TODO: add the average of everything in csv file at the end also be able to show it on the screen
 
 class Producer_Cell():
 
@@ -74,9 +75,13 @@ class Producer_Cell():
             new_shit.position_x, new_shit.position_y = producer_cell.position_x, producer_cell.position_y
             producer_cell.shit_ins.all_shit_list.append(new_shit)
 
+            # set the new position as dead
+            producer_cell.general.cell_matrix[producer_cell.position_y][producer_cell.position_x] = ""
+
             # remove the cell from existence, RIP little cellito :( o7
-            producer_cell.general.all_cells.remove(producer_cell)
-            producer_cell.producer_cell_list.remove(producer_cell)
+            General.all_cells.remove(producer_cell)
+            Producer_Cell.producer_cell_list.remove(producer_cell)
+
 
             return
         else:
