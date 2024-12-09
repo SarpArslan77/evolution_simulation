@@ -31,10 +31,10 @@ class Saprophyte():
         new_cell.general.cell_matrix[new_cell.position_y][new_cell.position_x] = "SP"
         new_cell.saprophyte_cell_list.append(new_cell)
         new_cell.short_term_position_memory.append((new_cell.position_x, new_cell.position_y))
+        #print((new_cell.position_x, new_cell.position_y))
 
         # Mark the rest of the shit positions empty and delete from the lists
         for x_position, y_position in shit_positions:
-            print(x_position, y_position)
             new_cell.general.utility_matrix[y_position][x_position] = ""
 
             # Remove the matching Shit object from the list
@@ -43,8 +43,7 @@ class Saprophyte():
                 if not (shit.position_x == x_position and shit.position_y == y_position)
             ]
 
-        print("created")
-        print()
+        return
 
     @classmethod
     def shit_born_chance(cls, general : General, position_x: int, position_y: int) -> tuple[int, list[tuple[int, int]]]:
@@ -57,23 +56,20 @@ class Saprophyte():
         shit_count: int = 1
         shit_positions: list[tuple[int, int]] = [(position_x, position_y)]
         for dx, dy in possible_zone:
-            if general.utility_matrix[position_y+dy][position_x+dx] == "S":
-                shit_positions.append((position_x+dx, position_y+dy))
-                shit_count += 1
+            if (0 <= position_x+dx <= general.WORLD_WIDTH // 10 - 1) and (0 <= position_y+dy <= general.WORLD_HEIGHT // 10 - 1):
+                if general.utility_matrix[position_y+dy][position_x+dx] == "S":
+                    shit_positions.append((position_x+dx, position_y+dy))
+                    shit_count += 1
         return (shit_count, shit_positions)
 
     def sense_shit(self, saprophyte: "Saprophyte", coordinates: list[tuple[int, int]]) -> list[tuple[int, int]]:
         found_shit_coordinates: list[tuple[int, int]] = []
 
-        for dy, dx in coordinates:
-            check_x = saprophyte.position_x + dx
-            check_y = saprophyte.position_y + dy
+        for dx, dy in coordinates:
 
-            if (0 <= check_y < len(saprophyte.general.utility_matrix) and
-                0 <= check_y < len(saprophyte.general.utility_matrix[0])):
-
-                if saprophyte.general.utility_matrix[check_y][check_x] == "S":
-                    found_shit_coordinates.append((check_x, check_y))
+            if (0 <= dx <= saprophyte.general.WORLD_WIDTH // 10 - 1) and (0 <= dy <= saprophyte.general.WORLD_HEIGHT // 10 - 1):
+                if saprophyte.general.utility_matrix[dy][dx] == "S":
+                    found_shit_coordinates.append((dx, dy))
 
         return found_shit_coordinates
     
@@ -91,9 +87,11 @@ class Saprophyte():
     def main_loop_saprophyte(self, saprophyte: "Saprophyte") -> None:
 
         if saprophyte.age >= saprophyte.life_expectancy and \
-        random.randint(1, 25000) < (saprophyte.age - saprophyte.life_expectancy):
+            random.randint(1, 25000) < (saprophyte.age - saprophyte.life_expectancy):
             
             saprophyte.general.utility_matrix[saprophyte.position_y][saprophyte.position_x] = "G"
+
+            saprophyte.general.cell_matrix[saprophyte.position_y][saprophyte.position_x] = ""
 
             saprophyte.general.all_cells.remove(saprophyte)
             saprophyte.saprophyte_cell_list.remove(saprophyte)
@@ -113,12 +111,10 @@ class Saprophyte():
         zone = zone_mapping.get(saprophyte.shit_sense_zone, None)
 
         # Filter valid coordinates
-        valid_zone = [coord for coord in zone if 
-                        saprophyte.is_movement_possible_saprophyte(
-                            saprophyte.position_x + coord[1],  # Swapped to match matrix coordinates
-                            saprophyte.position_y + coord[0],
-                            0, 0,
-                            saprophyte)]  # Check if position is valid, not movement
+        valid_zone: list[tuple[int, int]] = []
+        for coord in zone:
+            if saprophyte.is_movement_possible_saprophyte(saprophyte.position_x, saprophyte.position_y, coord[1], coord[0], saprophyte):
+                valid_zone.append((saprophyte.position_x+coord[1], saprophyte.position_y+coord[0]))
 
         found_shit_coordinates = saprophyte.sense_shit(saprophyte, valid_zone)
         
