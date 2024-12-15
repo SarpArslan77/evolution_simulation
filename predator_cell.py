@@ -6,7 +6,7 @@ from utility import Shit
 
 class Predator_Cell():
 
-    predator_cell_list: list["Predator_Cell"] = []
+    all_predator_cells: list["Predator_Cell"] = []
 
     def __init__(self, general: General, shit_ins: Shit):
         self.position_x, self.position_y = 0, 0
@@ -52,7 +52,7 @@ class Predator_Cell():
 
             # remove the cell from existence :(
             predator_cell.general.all_cells.remove(predator_cell)
-            predator_cell.predator_cell_list.remove(predator_cell)
+            predator_cell.all_predator_cells.remove(predator_cell)
 
             return
         else:
@@ -157,7 +157,7 @@ class Predator_Cell():
 
             self.general.all_cells.append(new_cell)
             self.general.cell_matrix[y_position][x_position] = "C"
-            self.predator_cell_list.append(new_cell)
+            self.all_predator_cells.append(new_cell)
             self.short_term_position_memory.append((x_position, y_position))
 
     def eat_food(self, predator_cell: "Predator_Cell") -> None:
@@ -188,7 +188,7 @@ class Predator_Cell():
         # create a shit utility
         new_shit = Shit(self.general.colors["BLACK"], "S")
         new_shit.position_x, new_shit.position_y = predator_cell.position_x, predator_cell.position_y
-        predator_cell.shit_ins.all_shit_list.append(new_shit)
+        predator_cell.shit_ins.all_shits.append(new_shit)
 
         # mark the shitted positions as "S"
         predator_cell.general.utility_matrix[new_shit.position_y][new_shit.position_x] = new_shit.symbol
@@ -226,7 +226,7 @@ class Predator_Cell():
         # Create children
         for _ in range(num_children):
             # Create a new predator cell
-            new_cell = Predator_Cell(predator_cell.general)
+            new_cell = Predator_Cell(predator_cell.general, predator_cell.shit_ins)
 
             # Find a nearby empty position to place the child
             possible_positions = [
@@ -249,7 +249,7 @@ class Predator_Cell():
                     
                     # Add the new cell to relevant lists and matrix
                     predator_cell.general.all_cells.append(new_cell)
-                    predator_cell.predator_cell_list.append(new_cell)
+                    predator_cell.all_predator_cells.append(new_cell)
                     predator_cell.general.cell_matrix[y][x] = "C"
                     predator_cell.short_term_position_memory.append((x, y))
 
