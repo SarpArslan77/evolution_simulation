@@ -19,7 +19,7 @@ from utility import Shit, Food
 #? correct the type hints for each function/variable, everything should be yellow
 #TODO saprophytes sometimes go through producer_cells
 #TODO   i suppose because the shit is for a very brief of time in the producer cells and therefore overrides the occupied condition, to move towards the food
-#! list already does not ahave the cell, when it should be deleted according to old age
+#! list already does not have the cell, when it should be deleted according to old age
 #!  -> most probably, when they got eaten, sth occurs, idk man
 
 
@@ -34,6 +34,9 @@ class Display():
 
         # Initialize pygame
         pygame.init()
+        pygame.font.init()
+
+
         
         # Get the screen info for fullscreen
         screen_info = pygame.display.Info()
@@ -51,6 +54,11 @@ class Display():
         # Create a larger surface for the entire map
         self.world = pygame.Surface((self.general.WORLD_WIDTH, self.general.WORLD_HEIGHT))
         
+        # font setup
+        self.font = pygame.font.Font(None, 15)
+
+
+
         # Camera and zoom settings
         self.camera_x = 0
         self.camera_y = 0
@@ -203,6 +211,7 @@ class Display():
     def draw_cells(self) -> None:
         color : tuple[int, int, int] = ()
         for cell in self.general.all_cells:
+
             if type(cell) == Predator_Cell:
                 color = self.general.colors["RED"]
             elif type(cell) == Producer_Cell:
@@ -225,6 +234,9 @@ class Display():
             if not(color):
                 color = self.general.colors["PINK"] ### DEBUGGING
             pygame.draw.rect(self.world, color, (cell.position_x*10+2, cell.position_y*10+2, 6, 6))
+
+            self.text_surface = self.font.render(self.general.cell_matrix[cell.position_y][cell.position_x], True, (0, 0, 0))
+            self.world.blit(self.text_surface, (cell.position_x*10+2, cell.position_y*10+2))
 
     def draw_utilities(self) -> None:
         # draw the food
@@ -303,26 +315,26 @@ class Display():
             self.draw_cells()
             
             # main loop for predator_cel
-            for predator_cell in Predator_Cell.predator_cell_list:
+            for predator_cell in Predator_Cell.all_predator_cells:
                 predator_cell.main_loop_predatorCell(predator_cell)
                 
             # main loop for producer_cell
-            for producer_cell in Producer_Cell.producer_cell_list:
+            for producer_cell in Producer_Cell.all_producer_cells:
                 producer_cell.main_loop_producerCell(producer_cell)
 
             # main loop for herbivores
-            for herbivore in Herbivore.herbivore_list:
+            for herbivore in Herbivore.all_herbivores:
                 herbivore.main_loop_herbivore(herbivore)
 
             # create saprophytes according to conditions
-            for shit in Shit.all_shit_list:
+            for shit in Shit.all_shits:
                 born_chance, shit_positions = Saprophyte.shit_born_chance(self.general, shit.position_x, shit.position_y)
                 if random.randint(2, 250) < pow(2, born_chance):
                     Saprophyte.generate_saprophyte(shit_positions, self.general)
 
-            # main loop for saprophyte
-            for saprophyte in Saprophyte.saprophyte_cell_list:
-                saprophyte.main_loop_saprophyte(saprophyte)
+            """# main loop for saprophyte
+            for saprophyte in Saprophyte.all_saprophytes:
+                saprophyte.main_loop_saprophyte(saprophyte)"""
 
             pygame.display.update()
             self.clock.tick(speed)
