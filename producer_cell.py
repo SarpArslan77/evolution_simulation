@@ -13,7 +13,7 @@ import numpy as np
 
 class Producer_Cell():
 
-    producer_cell_list: list["Producer_Cell"] = []
+    all_producer_cells: list["Producer_Cell"] = []
 
     all_data_sums: dict = {
         "food_production_speed" : 0,
@@ -73,14 +73,14 @@ class Producer_Cell():
             producer_cell.general.utility_matrix[producer_cell.position_y][producer_cell.position_x] = "S"
             new_shit = Shit(self.general.colors["BLACK"], "S")
             new_shit.position_x, new_shit.position_y = producer_cell.position_x, producer_cell.position_y
-            producer_cell.shit_ins.all_shit_list.append(new_shit)
+            producer_cell.shit_ins.all_shits.append(new_shit)
 
             # set the new position as dead
             producer_cell.general.cell_matrix[producer_cell.position_y][producer_cell.position_x] = ""
 
             # remove the cell from existence, RIP little cellito :( o7
             General.all_cells.remove(producer_cell)
-            Producer_Cell.producer_cell_list.remove(producer_cell)
+            Producer_Cell.all_producer_cells.remove(producer_cell)
 
 
             return
@@ -115,11 +115,11 @@ class Producer_Cell():
             new_cell.position_x, new_cell.position_y = x_position, y_position
 
             # all created cells must be added into the general cell list and general cell matrix
-            self.general.all_cells.append(new_cell)
-            self.general.cell_matrix[y_position][x_position] = "P"
+            General.all_cells.append(new_cell)
+            General.cell_matrix[y_position][x_position] = "P"
 
             # all created cells must be added into its local list for its types
-            self.producer_cell_list.append(new_cell)
+            Producer_Cell.all_producer_cells.append(new_cell)
 
     def random_position_producerCells(self) -> tuple[int, int]:
 
@@ -186,9 +186,9 @@ class Producer_Cell():
                     for attr in ["food_production_speed", "food_production_zone", "produce_amount", "shit_sense_zone"]:
                         setattr(new_cell, attr, producer_cell.mutate(new_cell, attr))
 
-                    producer_cell.general.all_cells.append(new_cell)
-                    producer_cell.producer_cell_list.append(new_cell)
-                    producer_cell.general.cell_matrix[new_cell.position_y][new_cell.position_x] = "P"
+                    General.all_cells.append(new_cell)
+                    Producer_Cell.all_producer_cells.append(new_cell)
+                    General.cell_matrix[new_cell.position_y][new_cell.position_x] = "P"
                     ###print(f"new_born's location is {new_cell.position_x}, {new_cell.position_y}")
                     break
         
@@ -263,7 +263,7 @@ class Producer_Cell():
         data_dict: dict = {}
         for data_type in attributes:
             temporary_data_list: list[int] = [
-                getattr(cell, data_type) for cell in self.producer_cell_list
+                getattr(cell, data_type) for cell in self.all_producer_cells
             ]
             data_dict[data_type] = np.mean(temporary_data_list)
 
