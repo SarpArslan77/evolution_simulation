@@ -5,7 +5,7 @@ class Food():
 
 class Shit():
     
-    all_shit_list: list["Shit"] = []
+    all_shits: list["Shit"] = []
 
     def __init__(self, color: tuple[int, int, int], symbol: str):
         self.position_x, self.position_y = 0, 0
