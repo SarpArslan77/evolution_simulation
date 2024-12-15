@@ -3,9 +3,11 @@ import random
 from general import General
 from utility import Shit
 
+#! some cells when they get created are not added to the cell matrix? idk why
+
 class Saprophyte():
 
-    saprophyte_cell_list: list["Saprophyte"] = []
+    all_saprophytes: list["Saprophyte"] = []
 
     def __init__(self, general: General):
 
@@ -29,7 +31,7 @@ class Saprophyte():
 
         new_cell.general.all_cells.append(new_cell)
         new_cell.general.cell_matrix[new_cell.position_y][new_cell.position_x] = "SP"
-        new_cell.saprophyte_cell_list.append(new_cell)
+        new_cell.all_saprophytes.append(new_cell)
         new_cell.short_term_position_memory.append((new_cell.position_x, new_cell.position_y))
         #print((new_cell.position_x, new_cell.position_y))
 
@@ -37,11 +39,10 @@ class Saprophyte():
         for x_position, y_position in shit_positions:
             new_cell.general.utility_matrix[y_position][x_position] = ""
 
-            # Remove the matching Shit object from the list
-            Shit.all_shit_list = [
-                shit for shit in Shit.all_shit_list
-                if not (shit.position_x == x_position and shit.position_y == y_position)
-            ]
+        for shit in Shit.all_shits[:]:
+            if shit.position_x == x_position and shit.position_y == y_position:
+                Shit.all_shits.remove(shit)
+                break  # Break after finding the first match
 
         return
 
@@ -55,7 +56,7 @@ class Saprophyte():
 
         shit_count: int = 1
         shit_positions: list[tuple[int, int]] = [(position_x, position_y)]
-        for dx, dy in possible_zone:
+        for dy, dx in possible_zone:
             if (0 <= position_x+dx <= general.WORLD_WIDTH // 10 - 1) and (0 <= position_y+dy <= general.WORLD_HEIGHT // 10 - 1):
                 if general.utility_matrix[position_y+dy][position_x+dx] == "S":
                     shit_positions.append((position_x+dx, position_y+dy))
@@ -94,7 +95,7 @@ class Saprophyte():
             saprophyte.general.cell_matrix[saprophyte.position_y][saprophyte.position_x] = ""
 
             saprophyte.general.all_cells.remove(saprophyte)
-            saprophyte.saprophyte_cell_list.remove(saprophyte)
+            saprophyte.all_saprophytes.remove(saprophyte)
 
             return
         else:
