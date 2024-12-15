@@ -2,11 +2,13 @@ import random
 
 from general import General
 from utility import Shit
+from producer_cell import Producer_Cell
 
+#! to the condition, add other biomes for producer cells
 
 class Herbivore(): 
 
-    herbivore_list: list["Herbivore"] = []
+    all_herbivores: list["Herbivore"] = []
 
     def __init__(self, general: General, shit_ins: Shit):
         self.position_x, self.position_y = 0, 0
@@ -19,8 +21,8 @@ class Herbivore():
         self.food_supply: int = 20  # 1 = hungry, 100 = full
 
         # attributes which are gene-dependent for each cell 
-        self.producer_cell_sense_zone: int = random.randint(1, 5)  # 1 = smallest, 5 = biggest
-        self.life_expectancy: int = random.randint(500, 5000) # 500 = shortest, 25000 = longest
+        self.producer_cell_sense_zone: int = 5  # 1 = smallest, 5 = biggest
+        self.life_expectancy: int = random.randint(500, 5000) # 500 = shortest, 5000 = longest
         self.produce_amount: int = random.randint(1, 8) # 1 = worst, 8 = best
     
         self.mutation_limits: dict = {
@@ -42,7 +44,7 @@ class Herbivore():
         # get old and check whether the cell is RIP
         #   chance of its dying increase when the cell's age pasts its life expectancy
         if herbivore.age >= herbivore.life_expectancy and \
-            random.randint(1, 25000) < (herbivore.age - herbivore.life_expectancy):
+            random.randint(1, 5000) < (herbivore.age - herbivore.life_expectancy):
 
             # set the dead position as a shit
             herbivore.general.utility_matrix[herbivore.position_y][herbivore.position_x] = "S"
@@ -52,15 +54,17 @@ class Herbivore():
 
             # remove the cell from existence :(
             herbivore.general.all_cells.remove(herbivore)
-            herbivore.herbivore_list.remove(herbivore)
+            herbivore.all_herbivores.remove(herbivore)
 
             return
         else:
             herbivore.age += 1
 
         # check whether the cell wants to reproduce
-        if herbivore.food_supply > 90:
+        if herbivore.food_supply > 9000:
             herbivore.reproduce(herbivore)
+
+        found_food_coordinates: list[tuple[int, int]] = []
 
         # Only look for food if not full
         if herbivore.food_supply < 100:  # Changed from 100 to more reasonable value
@@ -75,16 +79,15 @@ class Herbivore():
             zone = zone_mapping.get(herbivore.producer_cell_sense_zone, None)
 
             # Filter valid coordinates
-            valid_zone = [coord for coord in zone if 
-                         herbivore.is_movement_possible_herbivore(
-                             herbivore.position_x + coord[1],  # Swapped to match matrix coordinates
-                             herbivore.position_y + coord[0],
-                             0, 0,
-                             herbivore)]  # Check if position is valid, not movement
+            valid_zone : list[tuple[int, int]] = []
+            for coord in zone:
+                if (0 <= coord[1] + herbivore.position_x <= herbivore.general.WORLD_WIDTH // 10 - 1) and (0 <= coord[0] + herbivore.position_y <= herbivore.general.WORLD_HEIGHT // 10 - 1) and \
+                    not(herbivore.general.map_matrix[coord[0] + herbivore.position_y][coord[1] + herbivore.position_x] == 8 or herbivore.general.map_matrix[coord[0] + herbivore.position_y][coord[1] + herbivore.position_x] == 9):
+                    valid_zone.append(coord)
 
-            # Look for food in valid coordinates
+            # Look for producerCell in valid coordinates
             found_food_coordinates = herbivore.sense_producerCell(valid_zone, herbivore)
-            
+
             if found_food_coordinates:
                 # Find closest food
                 closest_food = min(found_food_coordinates,
@@ -100,9 +103,8 @@ class Herbivore():
                 dy = max(min(dy, 1), -1)
 
                 # Check if movement is possible
-                if herbivore.is_movement_possible_herbivore(
-                    herbivore.position_x, herbivore.position_y, dx, dy, herbivore):
-
+                if (0 <= herbivore.position_x + dx <= herbivore.general.WORLD_WIDTH // 10 - 1) and (0 <= herbivore.position_y + dy <= herbivore.general.WORLD_HEIGHT // 10 - 1) and \
+                    not(herbivore.general.map_matrix[herbivore.position_y + dy][herbivore.position_x + dx] == 8 or herbivore.general.map_matrix[herbivore.position_y + dy][herbivore.position_x + dx] == 9):
                     # Clear old position
                     herbivore.general.cell_matrix[herbivore.position_y][herbivore.position_x] = ""
 
@@ -136,33 +138,38 @@ class Herbivore():
         # Check for food at new position and eat if found
         # Filter valid coordinates
         valid_zone_producer_cell: list[tuple[int, int]] = []
-        for coord in [(1, 1), (1, 0), (0, 1), (-1, 0), (-1, -1), (0, -1), (1, -1), (-1, 1)]:
+        for dy, dx in [(-1, -1), (-1, 0), (-1, 1), 
+                        (0, -1), (0, 1), 
+                        (1, -1), (1, 0), (1, 1)]:
             if (0 <= herbivore.position_x + dx <= herbivore.general.WORLD_WIDTH // 10 - 1) and (0 <= herbivore.position_y + dy <= herbivore.general.WORLD_HEIGHT // 10 - 1) and \
                 not(herbivore.general.map_matrix[herbivore.position_y + dy][herbivore.position_x + dx] == 8 or herbivore.general.map_matrix[herbivore.position_y + dy][herbivore.position_x + dx] == 9):
                 
                 valid_zone_producer_cell.append((herbivore.position_x+dx, herbivore.position_y+dy))
         
+        # eat the producer_cells
         random.shuffle(valid_zone_producer_cell)
         if herbivore.food_supply < 10000000000:
             for dx, dy in valid_zone_producer_cell:
                 if herbivore.general.cell_matrix[dy][dx] == "P":
                     herbivore.eat_producerCell(herbivore)
+
                     # Remove the matching cell object from the list
-                    herbivore.general.all_cells = [
-                        producer_cell for producer_cell in herbivore.general.all_cells
+                    General.all_cells = [
+                        producer_cell for producer_cell in General.all_cells
                         if not (producer_cell.position_x == dx and producer_cell.position_y == dy)
                     ]
-                    herbivore.general.cell_matrix[herbivore.position_y][herbivore.position_x] = ""
+                    Producer_Cell.all_producer_cells = [
+                        producer_cell for producer_cell in Producer_Cell.all_producer_cells
+                        if not(producer_cell.position_x == dx and producer_cell.position_y == dy)
+                    ]
 
-                    # mark new position and add it to its position memory
-                    herbivore.general.cell_matrix[herbivore.position_y][herbivore.position_x] = "H"
-                    herbivore.short_term_position_memory.append((herbivore.position_x, herbivore.position_y))
+                    herbivore.general.cell_matrix[dy][dx] = ""
 
                     return
 
         # check if the cell wants to shit
-        if herbivore.food_supply > 50 and (random.randint(1, pow(10, 50)) < 10**(herbivore.food_supply-50)):
-            herbivore.shit(herbivore)
+        """if herbivore.food_supply > 50 and (random.randint(1, pow(10, 50)) < 10**(herbivore.food_supply-50)):
+            herbivore.shit(herbivore)"""
 
         # mark new position and add it to its position memory
         herbivore.general.cell_matrix[herbivore.position_y][herbivore.position_x] = "H"
@@ -176,12 +183,12 @@ class Herbivore():
 
             self.general.all_cells.append(new_cell)
             self.general.cell_matrix[y_position][x_position] = "H"
-            self.herbivore_list.append(new_cell)
+            self.all_herbivores.append(new_cell)
             self.short_term_position_memory.append((x_position, y_position))
 
     def eat_producerCell(self, herbivore: "Herbivore") -> None:
-        if herbivore.food_supply < 100:  # Changed from 100
-            herbivore.food_supply += 5
+        herbivore.food_supply += 5
+        print(herbivore.food_supply)
 
     def sense_producerCell(self, coordinates: list[tuple[int, int]], herbivore: "Herbivore") -> list[tuple[int, int]]:
         found_producerCell_coordinates : list[tuple[int, int]] = []
@@ -196,7 +203,6 @@ class Herbivore():
                 # Check if food exists at this position
                 if herbivore.general.cell_matrix[check_y][check_x] == "P":
                     found_producerCell_coordinates.append((check_x, check_y))
-        print(found_producerCell_coordinates)
         return found_producerCell_coordinates
     
     def shit(self, herbivore: "Herbivore") -> None:
@@ -207,7 +213,7 @@ class Herbivore():
         # create a shit utility
         new_shit = Shit(self.general.colors["BLACK"], "S")
         new_shit.position_x, new_shit.position_y = herbivore.position_x, herbivore.position_y
-        herbivore.shit_ins.all_shit_list.append(new_shit)
+        herbivore.shit_ins.all_shits.append(new_shit)
 
         # mark the shitted positions as "S"
         herbivore.general.utility_matrix[new_shit.position_y][new_shit.position_x] = new_shit.symbol
@@ -268,7 +274,7 @@ class Herbivore():
                     
                     # Add the new cell to relevant lists and matrix
                     herbivore.general.all_cells.append(new_cell)
-                    herbivore.herbivore_list.append(new_cell)
+                    herbivore.all_herbivores.append(new_cell)
                     herbivore.general.cell_matrix[y][x] = "H"
                     herbivore.short_term_position_memory.append((x, y))
 
