@@ -19,8 +19,7 @@ from utility import Shit, Food
 #? correct the type hints for each function/variable, everything should be yellow
 #TODO saprophytes sometimes go through producer_cells
 #TODO   i suppose because the shit is for a very brief of time in the producer cells and therefore overrides the occupied condition, to move towards the food
-#! list already does not have the cell, when it should be deleted according to old age
-#!  -> most probably, when they got eaten, sth occurs, idk man
+#! when a saprophyte is created, the producer cell on it just stay in the general_all_cells_list
 
 
 class Display():
@@ -81,6 +80,8 @@ class Display():
         self.choosen_map = 0
         # input the utility map from the user, default is the 0 (=no utility)
         self.choosen_utility_map = 0
+        # input the matrix_map from the user, default is the 0 (=no matrix)
+        self.choosen_matrix_map = 0 
 
         # draw the starting map
         self.draw_grid_map()
@@ -208,6 +209,18 @@ class Display():
             pygame.draw.line(self.world, self.general.colors["GRAY"], (i*10, 0), (i*10, self.general.WORLD_HEIGHT))
             pygame.draw.line(self.world, self.general.colors["GRAY"], (0, i*10), (self.general.WORLD_WIDTH, i*10))
 
+    def draw_cell_matrix_map(self, cell) -> None:
+        self.text_surface = self.font.render(self.general.cell_matrix[cell.position_y][cell.position_x], True, (0, 0, 0))
+        self.world.blit(self.text_surface, (cell.position_x*10+2, cell.position_y*10+2))
+
+    def draw_utility_matrix_map(self, x: int, y: int) -> None:
+        if self.general.utility_matrix[y][x] == "S":
+            color: tuple[int, int, int] = (255, 255, 255)
+        else:
+            color: tuple[int, int, int] = (0, 0, 0)
+        self.text_surface = self.font.render(self.general.utility_matrix[y][x], True, color)
+        self.world.blit(self.text_surface, (x*10+2, y*10+2))
+
     def draw_cells(self) -> None:
         color : tuple[int, int, int] = ()
         for cell in self.general.all_cells:
@@ -228,15 +241,19 @@ class Display():
                 else:
                     print("yarra")
             elif type(cell) == Saprophyte:
-                color = self.general.colors["PINK"]
+                if cell.type == 1:
+                    color = self.general.colors["PINK"]
+                elif cell.type == 2:
+                    color = self.general.colors["SAPROPHYTE_GREEN"]
             elif type(cell) == Herbivore:
                 color = self.general.colors["ORANGE"]
             if not(color):
                 color = self.general.colors["PINK"] ### DEBUGGING
             pygame.draw.rect(self.world, color, (cell.position_x*10+2, cell.position_y*10+2, 6, 6))
 
-            self.text_surface = self.font.render(self.general.cell_matrix[cell.position_y][cell.position_x], True, (0, 0, 0))
-            self.world.blit(self.text_surface, (cell.position_x*10+2, cell.position_y*10+2))
+            if self.choosen_matrix_map == 1:
+                self.draw_cell_matrix_map(cell)
+
 
     def draw_utilities(self) -> None:
         # draw the food
@@ -253,6 +270,8 @@ class Display():
                     if color:
                         pygame.draw.rect(self.world, color, (x+2, y+2, 6, 6))
                         color = ()
+                    if self.choosen_matrix_map == 2:
+                        self.draw_utility_matrix_map(x//10, y//10)
 
     def run(self):
 
@@ -274,6 +293,10 @@ class Display():
                         self.choosen_map = 0
                     elif event.key == pygame.K_1:
                         self.choosen_map = 1
+                    elif event.key == pygame.K_9:
+                        self.choosen_matrix_map = 1
+                    elif event.key == pygame.K_8:
+                        self.choosen_matrix_map = 2
                     # choose utility map
                     if event.key == pygame.K_KP0:
                         self.choosen_utility_map = 0
@@ -304,12 +327,15 @@ class Display():
                 self.draw_grid_map()
             elif self.choosen_map == 1:
                 self.draw_biom_map()
+
             
             # draw the utility map according to choice
             if self.choosen_utility_map == 0:
                 pass
             elif self.choosen_utility_map == 1:
                 self.draw_utilities()
+            
+
 
             # draw the cells
             self.draw_cells()
@@ -332,9 +358,9 @@ class Display():
                 if random.randint(2, 250) < pow(2, born_chance):
                     Saprophyte.generate_saprophyte(shit_positions, self.general)
 
-            """# main loop for saprophyte
+            # main loop for saprophyte
             for saprophyte in Saprophyte.all_saprophytes:
-                saprophyte.main_loop_saprophyte(saprophyte)"""
+                saprophyte.main_loop_saprophyte(saprophyte)
 
             pygame.display.update()
             self.clock.tick(speed)
