@@ -47,6 +47,8 @@ class General():
             "BRIGHT_PURPLE" : (195, 50, 235), #17
             "ORANGE" : (235, 145, 50), #18
             "GOLD" : (255, 215, 0), #19
+            "SAPROPHYTE_GREEN" : (0, 255, 200), #20
+            "BRIGHT_PURPLE" : (145, 0, 255), #21
             
         }
 
@@ -54,7 +56,7 @@ class General():
         self.starting_generation_producer_cell_count: int = 250
         self.starting_generation_predator_cell_count: int = 0
 
-        self.starting_generation_herbivore_count: int = 5
+        self.starting_generation_herbivore_count: int = 0
 
         self.one_to_one_zone: list[tuple[int, int]] = [(-1, -1), (-1, 0), (-1, 1), 
                                            (0, -1), (0, 1), 
