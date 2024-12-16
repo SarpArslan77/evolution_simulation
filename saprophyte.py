@@ -3,8 +3,6 @@ import random
 from general import General
 from utility import Shit
 
-#! some cells when they get created are not added to the cell matrix? idk why
-
 class Saprophyte():
 
     all_saprophytes: list["Saprophyte"] = []
@@ -21,6 +19,9 @@ class Saprophyte():
         self.shit_sense_zone: int = random.randint(1, 5)
         self.life_expectancy: int = random.randint(500, 5000)
 
+        # choose what type of saprophyte is it
+        self.type: int = 0 
+
         self.short_term_position_memory: list[tuple[int, int]] = []
 
     @classmethod
@@ -29,20 +30,28 @@ class Saprophyte():
         new_cell = Saprophyte(general)
         new_cell.position_x, new_cell.position_y = random.choice(shit_positions)
 
+        # set the type of saprophyte according to its living space(land or water)
+        if general.map_matrix[new_cell.position_y][new_cell.position_x] == 6 or \
+            general.map_matrix[new_cell.position_y][new_cell.position_x] == 4 or \
+            general.map_matrix[new_cell.position_y][new_cell.position_x] == 10:
+            new_cell.type = 1
+        elif general.map_matrix[new_cell.position_y][new_cell.position_x] == 8 or \
+            general.map_matrix[new_cell.position_y][new_cell.position_x] == 9:
+            new_cell.type = 2
+
         new_cell.general.all_cells.append(new_cell)
         new_cell.general.cell_matrix[new_cell.position_y][new_cell.position_x] = "SP"
         new_cell.all_saprophytes.append(new_cell)
         new_cell.short_term_position_memory.append((new_cell.position_x, new_cell.position_y))
         #print((new_cell.position_x, new_cell.position_y))
 
-        # Mark the rest of the shit positions empty and delete from the lists
-        for x_position, y_position in shit_positions:
-            new_cell.general.utility_matrix[y_position][x_position] = ""
-
+        # delete the all shits in the zone
         for shit in Shit.all_shits[:]:
-            if shit.position_x == x_position and shit.position_y == y_position:
+            if (shit.position_x, shit.position_y) in shit_positions:
+                new_cell.general.utility_matrix[shit.position_y][shit.position_x] = ""
                 Shit.all_shits.remove(shit)
-                break  # Break after finding the first match
+        
+
 
         return
 
@@ -78,11 +87,14 @@ class Saprophyte():
 
         # check if the new position is not out of bounds
         #   is not occupied
-        #   if the biome is walkable(aka not water)
+        #   if the biome is walkable for the corresponding type
         if (0 <= starting_x + dx <= saprophyte.general.WORLD_WIDTH // 10 - 1) and (0 <= starting_y + dy <= saprophyte.general.WORLD_HEIGHT // 10 - 1) and \
-            not(saprophyte.general.cell_matrix[starting_y + dy][starting_x + dx]) and \
-            not(saprophyte.general.map_matrix[starting_y + dy][starting_x + dx] == 8 or saprophyte.general.map_matrix[starting_y + dy][starting_x + dx] == 9):
-            return True
+            not(saprophyte.general.cell_matrix[starting_y + dy][starting_x + dx]):
+            if saprophyte.type == 1 and not(saprophyte.general.map_matrix[starting_y + dy][starting_x + dx] == 8 or saprophyte.general.map_matrix[starting_y + dy][starting_x + dx] == 9):
+                return True
+            elif saprophyte.type == 2 and (saprophyte.general.map_matrix[starting_y + dy][starting_x + dx] == 8 or saprophyte.general.map_matrix[starting_y + dy][starting_x + dx] == 9):
+                return True
+            
         return False
 
     def main_loop_saprophyte(self, saprophyte: "Saprophyte") -> None:
