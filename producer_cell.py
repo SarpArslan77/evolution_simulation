@@ -63,11 +63,17 @@ class Producer_Cell():
             "life_expectancy" : 250
         }
 
+        self.habitat_producerCell: list[int] = [6, 8, 9, 4, 10]
+
     def main_loop_producerCell(self, producer_cell: "Producer_Cell"):
 
         # check whether the cell is too old, so dies
         if producer_cell.age >= producer_cell.life_expectancy and \
             random.randint(1, 25000) < (producer_cell.age-producer_cell.life_expectancy):
+
+            # remove the cell from existence, RIP little cellito :( o7
+            General.all_cells.remove(producer_cell)
+            Producer_Cell.all_producer_cells.remove(producer_cell)
 
             # set the dead position as as shit
             producer_cell.general.utility_matrix[producer_cell.position_y][producer_cell.position_x] = "S"
@@ -78,9 +84,7 @@ class Producer_Cell():
             # set the new position as dead
             producer_cell.general.cell_matrix[producer_cell.position_y][producer_cell.position_x] = ""
 
-            # remove the cell from existence, RIP little cellito :( o7
-            General.all_cells.remove(producer_cell)
-            Producer_Cell.all_producer_cells.remove(producer_cell)
+
 
 
             return
@@ -190,6 +194,11 @@ class Producer_Cell():
                     Producer_Cell.all_producer_cells.append(new_cell)
                     General.cell_matrix[new_cell.position_y][new_cell.position_x] = "P"
                     ###print(f"new_born's location is {new_cell.position_x}, {new_cell.position_y}")
+
+                    # if there is a utility on the created position, it has to be destroyed
+                    if General.utility_matrix[new_cell.position_y][new_cell.position_x]:
+                        General.utility_matrix[new_cell.position_y][new_cell.position_x] = ""
+
                     break
         
         # map the possible zones
@@ -205,10 +214,10 @@ class Producer_Cell():
 
         # check if the new position is not out of bounds
         #   is not occupied
-        #   is suitable for producer cells(aka water or plains)
+        #   is suitable for producer cells
         if (0 <= starting_x + dx <= producer_cell.general.WORLD_WIDTH // 10 - 1) and (0 <= starting_y + dy <= producer_cell.general.WORLD_HEIGHT // 10 - 1) and \
             not(producer_cell.general.cell_matrix[starting_y + dy][starting_x + dx]) and \
-            (producer_cell.general.map_matrix[starting_y + dy][starting_x + dx] == 8 or producer_cell.general.map_matrix[starting_y + dy][starting_x + dx] == 6):
+            (producer_cell.general.map_matrix[starting_y + dy][starting_x + dx] in self.habitat_producerCell):
             
             return True
         
